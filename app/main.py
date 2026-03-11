@@ -44,3 +44,29 @@ def get_player(player_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Player not found")
 
     return player
+
+@app.put("/players/{player_id}", response_model=schemas.PlayerResponse)
+def update_player(player_id: int, updated_player: schemas.PlayerCreate, db: Session = Depends(get_db)):
+    player = db.query(models.Player).filter(models.Player.id == player_id).first()
+
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    for key, value in updated_player.model_dump().items():
+        setattr(player, key, value)
+
+    db.commit()
+    db.refresh(player)
+    return player
+
+
+@app.delete("/players/{player_id}")
+def delete_player(player_id: int, db: Session = Depends(get_db)):
+    player = db.query(models.Player).filter(models.Player.id == player_id).first()
+
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    db.delete(player)
+    db.commit()
+    return {"message": "Player deleted successfully"}

@@ -1,10 +1,8 @@
-<<<<<<< HEAD
 venv/
 __pycache__/
 *.pyc
 *.db
 .env
-=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -212,4 +210,3 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
->>>>>>> e37bef5cea62373fac545c222bf94744c7f9f78c
