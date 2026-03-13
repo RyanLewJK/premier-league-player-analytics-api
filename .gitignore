@@ -1,3 +1,9 @@
+# datasets
+data/*.csv
+
+# database
+*.db
+
 venv/
 __pycache__/
 *.pyc
