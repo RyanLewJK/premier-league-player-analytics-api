@@ -24,6 +24,24 @@ class PlayerCreate(PlayerBase):
     pass
 
 
+class PlayerUpdate(BaseModel):
+    player_name: Optional[str] = None
+    club_name: Optional[str] = None
+    position_name: Optional[str] = None
+    minutes: Optional[int] = None
+    total_points: Optional[int] = None
+    points_per_game: Optional[float] = None
+    goals_scored: Optional[int] = None
+    assists: Optional[int] = None
+    clean_sheets: Optional[int] = None
+    goals_conceded: Optional[int] = None
+    saves: Optional[int] = None
+    defensive_contribution: Optional[int] = None
+    yellow_cards: Optional[int] = None
+    red_cards: Optional[int] = None
+    bonus: Optional[int] = None
+
+
 class PlayerResponse(PlayerBase):
     id: int
 
@@ -40,6 +58,22 @@ class PlayerMarketValueBase(BaseModel):
     league_name: Optional[str] = None
     current_value_gbp: float
     peak_value_gbp: float
+    trajectory: Optional[str] = None
+
+
+class PlayerMarketValueCreate(PlayerMarketValueBase):
+    pass
+
+
+class PlayerMarketValueUpdate(BaseModel):
+    player_name: Optional[str] = None
+    club_name: Optional[str] = None
+    age: Optional[int] = None
+    position: Optional[str] = None
+    position_group: Optional[str] = None
+    league_name: Optional[str] = None
+    current_value_gbp: Optional[float] = None
+    peak_value_gbp: Optional[float] = None
     trajectory: Optional[str] = None
 
 

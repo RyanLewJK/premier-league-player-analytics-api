@@ -70,3 +70,18 @@ def get_players_by_position(position: str, db: Session = Depends(get_db)):
 @router.get("/club/{club}", response_model=list[schemas.PlayerResponse])
 def get_players_by_club(club: str, db: Session = Depends(get_db)):
     return db.query(models.Player).filter(models.Player.club_name.ilike(club)).all()
+
+@router.patch("/{player_id}", response_model=schemas.PlayerResponse)
+def patch_player(player_id: int, updated_fields: schemas.PlayerUpdate, db: Session = Depends(get_db)):
+    player = db.query(models.Player).filter(models.Player.id == player_id).first()
+    if not player:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    update_data = updated_fields.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(player, key, value)
+
+    db.commit()
+    db.refresh(player)
+    return player

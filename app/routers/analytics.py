@@ -1,10 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
 from .. import models, schemas
+from ..scoring import (
+    calculate_performance_score,
+    calculate_value_score,
+    calculate_breakout_score,
+    find_market_value_for_player,
+    build_market_value_lookup,
+)
 
-router = APIRouter(prefix="/market-values", tags=["Market Values"])
+router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 
 def get_db():
@@ -15,18 +22,78 @@ def get_db():
         db.close()
 
 
-@router.get("", response_model=list[schemas.PlayerMarketValueResponse])
-def get_market_values(db: Session = Depends(get_db)):
-    return db.query(models.PlayerMarketValue).all()
+def build_player_score(
+    player: models.Player,
+    market_lookup: dict
+) -> schemas.PlayerScoreResponse:
+    performance_score = calculate_performance_score(player)
+    matched_market_value = find_market_value_for_player(player, market_lookup)
+
+    market_value_gbp = None
+    value_score = None
+    breakout_score = None
+
+    if matched_market_value:
+        market_value_gbp = matched_market_value.current_value_gbp
+        value_score = calculate_value_score(performance_score, market_value_gbp)
+    else:
+        breakout_score = calculate_breakout_score(player, has_market_value=False)
+
+    return schemas.PlayerScoreResponse(
+        player_id=player.id,
+        player_name=player.player_name,
+        club_name=player.club_name,
+        position_name=player.position_name,
+        minutes=player.minutes,
+        performance_score=performance_score,
+        market_value_gbp=market_value_gbp,
+        value_score=value_score,
+        breakout_score=breakout_score,
+    )
 
 
-@router.get("/{market_value_id}", response_model=schemas.PlayerMarketValueResponse)
-def get_market_value(market_value_id: int, db: Session = Depends(get_db)):
-    record = db.query(models.PlayerMarketValue).filter(
-        models.PlayerMarketValue.id == market_value_id
-    ).first()
+@router.get("/player-scores", response_model=list[schemas.PlayerScoreResponse])
+def get_player_scores(db: Session = Depends(get_db)):
+    players = db.query(models.Player).all()
+    market_values = db.query(models.PlayerMarketValue).all()
+    market_lookup = build_market_value_lookup(market_values)
 
-    if not record:
-        raise HTTPException(status_code=404, detail="Market value record not found")
+    results = [build_player_score(player, market_lookup) for player in players]
+    return results
 
-    return record
+
+@router.get("/top-performers", response_model=list[schemas.PlayerScoreResponse])
+def get_top_performers(limit: int = 10, db: Session = Depends(get_db)):
+    players = db.query(models.Player).all()
+    market_values = db.query(models.PlayerMarketValue).all()
+    market_lookup = build_market_value_lookup(market_values)
+
+    results = [build_player_score(player, market_lookup) for player in players]
+    results.sort(key=lambda x: x.performance_score, reverse=True)
+    return results[:limit]
+
+
+@router.get("/best-value", response_model=list[schemas.PlayerScoreResponse])
+def get_best_value(limit: int = 10, db: Session = Depends(get_db)):
+    players = db.query(models.Player).all()
+    market_values = db.query(models.PlayerMarketValue).all()
+    market_lookup = build_market_value_lookup(market_values)
+
+    results = [build_player_score(player, market_lookup) for player in players]
+    results = [result for result in results if result.value_score is not None]
+
+    results.sort(key=lambda x: x.value_score, reverse=True)
+    return results[:limit]
+
+
+@router.get("/breakout-players", response_model=list[schemas.PlayerScoreResponse])
+def get_breakout_players(limit: int = 10, db: Session = Depends(get_db)):
+    players = db.query(models.Player).all()
+    market_values = db.query(models.PlayerMarketValue).all()
+    market_lookup = build_market_value_lookup(market_values)
+
+    results = [build_player_score(player, market_lookup) for player in players]
+    results = [result for result in results if result.breakout_score is not None]
+
+    results.sort(key=lambda x: x.breakout_score, reverse=True)
+    return results[:limit]

@@ -103,21 +103,24 @@ def calculate_breakout_score(player: Player, has_market_value: bool) -> Optional
     performance_score = calculate_performance_score(player)
     availability = get_availability_factor(player.minutes)
 
-    # Unknown-value players with strong performance and decent minutes get rewarded
     breakout_score = performance_score * (0.8 + availability)
     return round(breakout_score, 2)
 
 
-def find_market_value_for_player(player: Player, market_values: list[PlayerMarketValue]) -> Optional[PlayerMarketValue]:
+def find_market_value_for_player(
+    player: Player,
+    market_lookup: dict
+) -> Optional[PlayerMarketValue]:
+
     player_name = normalize_text(player.player_name)
-    club_name = normalize_text(player.club_name)
+
+    return market_lookup.get(player_name)
+
+def build_market_value_lookup(market_values: list[PlayerMarketValue]) -> dict:
+    lookup = {}
 
     for mv in market_values:
-        if mv.normalized_name == player_name and mv.normalized_club == club_name:
-            return mv
+        if mv.normalized_name:
+            lookup[mv.normalized_name] = mv
 
-    for mv in market_values:
-        if mv.normalized_name == player_name:
-            return mv
-
-    return None
+    return lookup
