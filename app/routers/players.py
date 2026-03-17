@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from ..database import SessionLocal
 from .. import models, schemas
@@ -27,6 +28,19 @@ def create_player(player: schemas.PlayerCreate, db: Session = Depends(get_db)):
 @router.get("", response_model=list[schemas.PlayerResponse])
 def get_players(db: Session = Depends(get_db)):
     return db.query(models.Player).all()
+
+
+@router.get("/search", response_model=list[schemas.PlayerResponse])
+def search_players(
+    name: str = Query(..., min_length=1),
+    db: Session = Depends(get_db)
+):
+    players = (
+        db.query(models.Player)
+        .filter(func.lower(models.Player.player_name).contains(name.lower()))
+        .all()
+    )
+    return players
 
 
 @router.get("/{player_id}", response_model=schemas.PlayerResponse)
@@ -70,6 +84,7 @@ def get_players_by_position(position: str, db: Session = Depends(get_db)):
 @router.get("/club/{club}", response_model=list[schemas.PlayerResponse])
 def get_players_by_club(club: str, db: Session = Depends(get_db)):
     return db.query(models.Player).filter(models.Player.club_name.ilike(club)).all()
+
 
 @router.patch("/{player_id}", response_model=schemas.PlayerResponse)
 def patch_player(player_id: int, updated_fields: schemas.PlayerUpdate, db: Session = Depends(get_db)):
