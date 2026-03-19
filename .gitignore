@@ -1,5 +1,4 @@
-# datasets
-data/*.csv
+
 
 # database
 *.db
