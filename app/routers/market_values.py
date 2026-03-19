@@ -18,6 +18,13 @@ def get_db():
         db.close()
 
 
+def normalize_text(text: str) -> str:
+    """
+    Normalize text for consistent matching and lookup.
+    """
+    return text.strip().lower()
+
+
 @router.post(
     "",
     response_model=schemas.PlayerMarketValueResponse,
@@ -32,7 +39,11 @@ def create_market_value(
     """
     Add a new player market value record to the database.
     """
-    db_record = models.PlayerMarketValue(**market_value.model_dump())
+    data = market_value.model_dump()
+    data["normalized_name"] = normalize_text(data["player_name"])
+    data["normalized_club"] = normalize_text(data["club_name"])
+
+    db_record = models.PlayerMarketValue(**data)
     db.add(db_record)
     db.commit()
     db.refresh(db_record)
@@ -93,7 +104,11 @@ def update_market_value(
     if not record:
         raise HTTPException(status_code=404, detail="Market value record not found")
 
-    for key, value in updated_record.model_dump().items():
+    update_data = updated_record.model_dump()
+    update_data["normalized_name"] = normalize_text(update_data["player_name"])
+    update_data["normalized_club"] = normalize_text(update_data["club_name"])
+
+    for key, value in update_data.items():
         setattr(record, key, value)
 
     db.commit()
@@ -123,6 +138,12 @@ def patch_market_value(
         raise HTTPException(status_code=404, detail="Market value record not found")
 
     update_data = updated_fields.model_dump(exclude_unset=True)
+
+    if "player_name" in update_data:
+        update_data["normalized_name"] = normalize_text(update_data["player_name"])
+
+    if "club_name" in update_data:
+        update_data["normalized_club"] = normalize_text(update_data["club_name"])
 
     for key, value in update_data.items():
         setattr(record, key, value)

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 
@@ -44,9 +44,7 @@ class PlayerUpdate(BaseModel):
 
 class PlayerResponse(PlayerBase):
     id: int
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PlayerMarketValueBase(BaseModel):
@@ -80,8 +78,7 @@ class PlayerMarketValueUpdate(BaseModel):
 class PlayerMarketValueResponse(PlayerMarketValueBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PlayerScoreResponse(BaseModel):
@@ -95,5 +92,4 @@ class PlayerScoreResponse(BaseModel):
     value_score: Optional[float] = None
     breakout_score: Optional[float] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
