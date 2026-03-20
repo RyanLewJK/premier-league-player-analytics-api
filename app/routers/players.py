@@ -4,6 +4,7 @@ from sqlalchemy import func
 
 from ..database import SessionLocal
 from .. import models, schemas
+from ..security import verify_api_key
 
 router = APIRouter(
     prefix="/players",
@@ -120,6 +121,7 @@ def get_player(player_id: int, db: Session = Depends(get_db)):
 @router.put(
     "/{player_id}",
     response_model=schemas.PlayerResponse,
+    dependencies=[Depends(verify_api_key)],
     summary="Replace a player record",
     description="Fully updates an existing player record. All fields must be supplied, as PUT replaces the full resource."
 )
@@ -142,6 +144,7 @@ def update_player(player_id: int, updated_player: schemas.PlayerCreate, db: Sess
 @router.patch(
     "/{player_id}",
     response_model=schemas.PlayerResponse,
+    dependencies=[Depends(verify_api_key)],
     summary="Partially update a player record",
     description="Updates only the supplied fields of an existing player record, leaving all other fields unchanged."
 )
@@ -166,6 +169,7 @@ def patch_player(player_id: int, updated_fields: schemas.PlayerUpdate, db: Sessi
 @router.delete(
     "/{player_id}",
     summary="Delete a player",
+    dependencies=[Depends(verify_api_key)],
     description="Deletes an existing player record from the database using its unique ID."
 )
 def delete_player(player_id: int, db: Session = Depends(get_db)):

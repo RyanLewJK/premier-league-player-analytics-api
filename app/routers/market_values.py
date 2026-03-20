@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from ..database import SessionLocal
 from .. import models, schemas
+from ..security import verify_api_key
 
 router = APIRouter(
     prefix="/market-values",
@@ -29,6 +30,7 @@ def normalize_text(text: str) -> str:
     "",
     response_model=schemas.PlayerMarketValueResponse,
     status_code=201,
+    dependencies=[Depends(verify_api_key)],
     summary="Create a market value record",
     description="Creates a new market value entry for a player, including current value, peak value, and optional metadata such as position and trajectory."
 )
@@ -87,6 +89,7 @@ def get_market_value(market_value_id: int, db: Session = Depends(get_db)):
     "/{market_value_id}",
     response_model=schemas.PlayerMarketValueResponse,
     summary="Replace a market value record",
+    dependencies=[Depends(verify_api_key)],
     description="Fully updates an existing market value record. All fields must be provided, as PUT replaces the entire resource."
 )
 def update_market_value(
@@ -120,6 +123,7 @@ def update_market_value(
     "/{market_value_id}",
     response_model=schemas.PlayerMarketValueResponse,
     summary="Partially update a market value record",
+    dependencies=[Depends(verify_api_key)],
     description="Updates only the supplied fields of a market value record, leaving all other fields unchanged."
 )
 def patch_market_value(
@@ -156,6 +160,7 @@ def patch_market_value(
 @router.delete(
     "/{market_value_id}",
     summary="Delete a market value record",
+    dependencies=[Depends(verify_api_key)],
     description="Deletes a market value record from the database using its unique ID."
 )
 def delete_market_value(market_value_id: int, db: Session = Depends(get_db)):
