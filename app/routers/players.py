@@ -25,6 +25,7 @@ def get_db():
     response_model=schemas.PlayerResponse,
     status_code=201,
     summary="Create a new player",
+    dependencies=[Depends(verify_api_key)],
     description="Creates a new player record in the database using the supplied player statistics and profile information."
 )
 def create_player(player: schemas.PlayerCreate, db: Session = Depends(get_db)):
